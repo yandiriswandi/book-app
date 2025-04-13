@@ -10,26 +10,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func CreateBook(c *gin.Context) {
-	var book models.Book
+func CreateCategory(c *gin.Context) {
+	var category models.Category
 	// Validasi input
-	if err := c.ShouldBindJSON(&book); err != nil {
+	if err := c.ShouldBindJSON(&category); err != nil {
 		// Tapi jangan langsung return, simpan errornya dulu
 		validationError := err.Error()
 
 		// Cek manual field kosong
-		if book.Nama == "" {
+		if category.Nama == "" {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"status":  400,
 				"message": "Nama tidak boleh kosong",
-			})
-			return
-		}
-
-		if book.Rating > 100 {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"status":  400,
-				"message": "Rating tidak boleh lebih dari 100",
 			})
 			return
 		}
@@ -42,12 +34,12 @@ func CreateBook(c *gin.Context) {
 		return
 	}
 
-	query := `INSERT INTO book (nama, lokasi,kategori, rating,description) VALUES ($1, $2, $3,$4) RETURNING id`
-	err := config.DB.QueryRow(query, book.Nama, book.Kategori, book.Rating, book.Description).Scan(&book.ID)
+	query := `INSERT INTO category (nama, description) VALUES ($1, $2) RETURNING id`
+	err := config.DB.QueryRow(query, category.Nama, category.Description).Scan(&category.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  500,
-			"message": "Gagal menambahkan book",
+			"message": "Gagal menambahkan category",
 		})
 		return
 	}
@@ -55,29 +47,22 @@ func CreateBook(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status":  200,
 		"message": "Data berhasil dibuat!",
-		"data":    book,
+		"data":    category,
 	})
 }
 
-func UpdateBook(c *gin.Context) {
-	var book models.Book
+func UpdateCategory(c *gin.Context) {
+	var category models.Category
 	id := c.Param("id") // ambil id dari URL parameter
 
 	// Validasi input
-	if err := c.ShouldBindJSON(&book); err != nil {
+	if err := c.ShouldBindJSON(&category); err != nil {
 		validationError := err.Error()
 
-		if book.Nama == "" {
+		if category.Nama == "" {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"status":  400,
 				"message": "Nama tidak boleh kosong",
-			})
-			return
-		}
-		if book.Rating > 100 {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"status":  400,
-				"message": "Rating tidak boleh lebih dari 100",
 			})
 			return
 		}
@@ -89,12 +74,12 @@ func UpdateBook(c *gin.Context) {
 		return
 	}
 
-	query := `UPDATE book SET nama = $1, kategori = $2, rating = $3,description=$4 WHERE id = $5`
-	res, err := config.DB.Exec(query, book.Nama, book.Kategori, book.Rating, book.Description, id)
+	query := `UPDATE category SET nama = $1, description=$4 WHERE id = $3`
+	res, err := config.DB.Exec(query, category.Nama, category.Description, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  500,
-			"message": "Gagal memperbarui book",
+			"message": "Gagal memperbarui category",
 		})
 		return
 	}
@@ -103,7 +88,7 @@ func UpdateBook(c *gin.Context) {
 	if rowsAffected == 0 {
 		c.JSON(http.StatusNotFound, gin.H{
 			"status":  404,
-			"message": "Book tidak ditemukan",
+			"message": "Category tidak ditemukan",
 		})
 		return
 	}
@@ -111,19 +96,19 @@ func UpdateBook(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status":  200,
 		"message": "Data berhasil diperbarui!",
-		"data":    book,
+		"data":    category,
 	})
 }
 
-func DeleteBook(c *gin.Context) {
+func DeleteCategory(c *gin.Context) {
 	id := c.Param("id") // ambil id dari URL parameter
 
-	query := `DELETE FROM book WHERE id = $1`
+	query := `DELETE FROM category WHERE id = $1`
 	res, err := config.DB.Exec(query, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  500,
-			"message": "Gagal menghapus book",
+			"message": "Gagal menghapus category",
 		})
 		return
 	}
@@ -132,18 +117,18 @@ func DeleteBook(c *gin.Context) {
 	if rowsAffected == 0 {
 		c.JSON(http.StatusNotFound, gin.H{
 			"status":  404,
-			"message": "Book tidak ditemukan",
+			"message": "Category tidak ditemukan",
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"status":  200,
-		"message": "Book berhasil dihapus",
+		"message": "Category berhasil dihapus",
 	})
 }
 
-func GetBookList(c *gin.Context) {
+func GetCategoryList(c *gin.Context) {
 	// Ambil query parameter page dan size, default kalau kosong
 	pageStr := c.DefaultQuery("page", "1")
 	sizeStr := c.DefaultQuery("size", "10")
@@ -161,7 +146,7 @@ func GetBookList(c *gin.Context) {
 
 	// Hitung total data
 	var totalData int
-	err = config.DB.QueryRow(`SELECT COUNT(*) FROM book`).Scan(&totalData)
+	err = config.DB.QueryRow(`SELECT COUNT(*) FROM category`).Scan(&totalData)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  500,
@@ -170,56 +155,56 @@ func GetBookList(c *gin.Context) {
 		return
 	}
 
-	// Ambil data book
-	rows, err := config.DB.Query(`SELECT id, nama, kategori, rating,description FROM book ORDER BY id LIMIT $1 OFFSET $2`, size, offset)
+	// Ambil data category
+	rows, err := config.DB.Query(`SELECT id, nama, description FROM category ORDER BY id LIMIT $1 OFFSET $2`, size, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  500,
-			"message": "Gagal mengambil data book",
+			"message": "Gagal mengambil data category",
 		})
 		return
 	}
 	defer rows.Close()
 
-	var books []models.Book
+	var categorys []models.Category
 	for rows.Next() {
-		var book models.Book
-		if err := rows.Scan(&book.ID, &book.Nama, &book.Kategori, &book.Rating, &book.Description); err != nil {
+		var category models.Category
+		if err := rows.Scan(&category.ID, &category.Nama, &category.Description); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"status":  500,
-				"message": "Gagal membaca data book",
+				"message": "Gagal membaca data category",
 			})
 			return
 		}
-		books = append(books, book)
+		categorys = append(categorys, category)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"status":    200,
-		"message":   "Berhasil mengambil list book",
-		"data":      books,
+		"message":   "Berhasil mengambil list category",
+		"data":      categorys,
 		"page":      page,
 		"size":      size,
 		"totalData": totalData,
 	})
 }
 
-func GetBookByID(c *gin.Context) {
+func GetCategoryByID(c *gin.Context) {
 	id := c.Param("id")
 
-	var book models.Book
-	query := `SELECT id, nama, kategori, rating,description FROM book WHERE id = $1`
-	err := config.DB.QueryRow(query, id).Scan(&book.ID, &book.Nama, &book.Kategori, &book.Rating, &book.Description)
+	var category models.Category
+	query := `SELECT id, nama, description FROM category WHERE id = $1`
+	err := config.DB.QueryRow(query, id).Scan(&category.ID, &category.Nama, &category.Description)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			c.JSON(http.StatusNotFound, gin.H{
 				"status":  404,
-				"message": "Book tidak ditemukan",
+				"message": "Category tidak ditemukan",
 			})
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"status":  500,
-				"message": "Gagal mengambil detail book",
+				"message": "Gagal mengambil detail category",
 			})
 		}
 		return
@@ -227,7 +212,7 @@ func GetBookByID(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"status":  200,
-		"message": "Berhasil mengambil detail book",
-		"data":    book,
+		"message": "Berhasil mengambil detail category",
+		"data":    category,
 	})
 }

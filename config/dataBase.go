@@ -23,17 +23,17 @@ func InitDB() {
 	}
 	var err error
 	// Ambil value dari environment
-	// dbHost := os.Getenv("DB_HOST")
-	// dbPort := os.Getenv("DB_PORT")
-	// dbUser := os.Getenv("DB_USER")
-	// dbPassword := os.Getenv("DB_PASSWORD")
-	// dbName := os.Getenv("DB_NAME")
+	dbHost := os.Getenv("DB_HOST")
+	dbPort := os.Getenv("DB_PORT")
+	dbUser := os.Getenv("DB_USER")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbName := os.Getenv("DB_NAME")
 
-	dbHost := os.Getenv("PGHOST")
-	dbPort := os.Getenv("PGPORT")
-	dbUser := os.Getenv("PGUSER")
-	dbPassword := os.Getenv("PGPASSWORD")
-	dbName := os.Getenv("PGDATABASE")
+	// dbHost := os.Getenv("PGHOST")
+	// dbPort := os.Getenv("PGPORT")
+	// dbUser := os.Getenv("PGUSER")
+	// dbPassword := os.Getenv("PGPASSWORD")
+	// dbName := os.Getenv("PGDATABASE")
 
 	// Bangun connection string
 	connStr := fmt.Sprintf(
@@ -60,7 +60,7 @@ func InitDB() {
 		description TEXT
 	);
 	
-	CREATE TABLE IF NOT EXISTS bioskop (
+	CREATE TABLE IF NOT EXISTS book (
 		id SERIAL PRIMARY KEY,
 		nama VARCHAR(100) NOT NULL,
 		kategori_id INT NOT NULL,
